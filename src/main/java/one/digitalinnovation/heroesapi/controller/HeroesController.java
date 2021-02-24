@@ -6,7 +6,6 @@ import one.digitalinnovation.heroesapi.service.HeroesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,6 +20,13 @@ public class HeroesController {
   @Autowired
   private HeroesService heroesService;
 
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public Mono<Heroes> create(@RequestBody Heroes hero) {
+    log.info("creating a new Hero");
+    return this.heroesService.saveHero(hero);
+  }
+
   @GetMapping("")
   public Flux<Heroes> getAll() {
     log.info("requesting all Heroes");
@@ -33,11 +39,11 @@ public class HeroesController {
     return this.heroesService.findHeroById(id);
   }
 
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  public Mono<Heroes> create(@RequestBody Heroes hero) {
-    log.info("creating a new Hero");
-    return this.heroesService.createHero(hero);
+  @PutMapping("/{id}")
+  public Mono<Heroes> updateById(@PathVariable String id, @RequestBody Heroes hero) {
+    hero.setId(id);
+    log.info("updating Hero with id {}", id);
+    return this.heroesService.saveHero(hero);
   }
 
   @DeleteMapping("/{id}")
@@ -47,8 +53,8 @@ public class HeroesController {
     this.heroesService.deleteHeroById(id);
   }
 
-  @ExceptionHandler({EmptyResultDataAccessException.class})
-  public ResponseEntity handle(EmptyResultDataAccessException ex) {
-    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-  }
+  @ExceptionHandler(EmptyResultDataAccessException.class)
+  @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Hero not found!")
+  public void handle(EmptyResultDataAccessException ex) { }
+
 }
